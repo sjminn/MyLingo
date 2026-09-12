@@ -5,69 +5,67 @@ a browser right now. It'll show placeholders until the two small backend
 functions below are deployed, because fetching real news and calling Claude
 has to happen on a server, not in the browser (see requirements.md for why).
 
-This is a one-time setup. After it's done, you'll paste two things into the
-app's Settings panel and it works from then on.
+This is a one-time setup, done entirely through the Supabase website — no
+command line or software installs needed. After it's done, you'll paste two
+things into the app's Settings panel and it works from then on.
 
 ## What you'll need
 
 - A free [Supabase](https://supabase.com) account.
 - A free [Anthropic Console](https://console.anthropic.com) account, with an
   API key (this is separate from your Claude.ai login).
-- The [Supabase CLI](https://supabase.com/docs/guides/cli) installed on your
-  computer. On Windows, the easiest way is usually:
-  ```bash
-  npx supabase --version
-  ```
-  (running any `supabase` command through `npx` downloads it on first use —
-  no separate install needed).
 
 ## Steps
 
 1. **Create a Supabase project.** In the Supabase dashboard, click "New
    project" and give it any name (e.g. "german-reading").
 
-2. **Link this folder to that project.** From inside the `german-reading`
-   folder, run:
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref YOUR-PROJECT-REF
-   ```
-   Your project ref is in the Supabase dashboard URL
-   (`supabase.com/dashboard/project/YOUR-PROJECT-REF`).
+2. **Copy your Project URL and anon key.** In the project, go to
+   **Project Settings → API**. You'll need two values from this page:
+   - **Project URL** (looks like `https://abcdefgh.supabase.co`)
+   - **anon public** key (a long string under "Project API keys")
 
-3. **Store your Anthropic key as a secret** (this keeps it off the browser
-   entirely — it only lives on Supabase's servers):
-   ```bash
-   npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-your-key-here
-   ```
+3. **Store your Anthropic key as a secret.** Go to **Edge Functions** in the
+   left sidebar, then find the **Secrets** tab. Add a new secret:
+   - Name: `ANTHROPIC_API_KEY`
+   - Value: your Anthropic API key (starts with `sk-ant-`)
 
-4. **Deploy both functions:**
-   ```bash
-   npx supabase functions deploy get-article --no-verify-jwt
-   npx supabase functions deploy translate --no-verify-jwt
-   ```
-   (`--no-verify-jwt` means the app doesn't need to send a Supabase login
-   token to call these — fine for a personal project like this.)
+   This keeps the key on Supabase's servers — it never touches the browser.
 
-5. **Find your Edge Functions URL.** It follows this pattern:
+4. **Create the first function.** Still in **Edge Functions**, click
+   **Deploy a new function** (or **Create a function**). Name it exactly:
    ```
-   https://YOUR-PROJECT-REF.functions.supabase.co
+   get-article
    ```
+   Open [supabase/functions/get-article/index.ts](supabase/functions/get-article/index.ts)
+   in this project, copy its entire contents, and paste them into the code
+   editor Supabase gives you. Deploy it.
+
+5. **Create the second function** the same way, named exactly:
+   ```
+   translate
+   ```
+   using the contents of [supabase/functions/translate/index.ts](supabase/functions/translate/index.ts).
 
 6. **Open the app, click Settings, and paste in:**
-   - **Supabase Edge Functions URL** — from step 5.
+   - **Supabase Edge Functions URL** — your Project URL from step 2, with
+     `/functions/v1` added to the end, e.g.
+     `https://abcdefgh.supabase.co/functions/v1`
+   - **Supabase anon key** — the anon public key from step 2. (Supabase
+     functions expect this by default, so fill this in rather than leaving
+     it blank.)
    - **ElevenLabs API key** — from your ElevenLabs account, for the Listen
-     button. (Leave the anon key field blank; it's not needed with
-     `--no-verify-jwt`.)
+     button.
 
 7. Click **New Article**. If something goes wrong, the app will show a short
-   error message — the most common cause is a typo in the Functions URL, or
-   the `ANTHROPIC_API_KEY` secret not being set yet.
+   error message — the most common causes are a typo in the Functions URL, a
+   missing anon key, or the `ANTHROPIC_API_KEY` secret not being set yet.
 
 ## Notes
 
 - DW's exact RSS feed path occasionally changes. If articles stop coming from
   DW specifically, check [rss.dw.com](https://rss.dw.com) for the current feed
-  URL and update it in `supabase/functions/get-article/index.ts`.
-- Re-deploying after any code edit just means re-running the `deploy` command
-  from step 4 for whichever function you changed.
+  URL, update it in `supabase/functions/get-article/index.ts`, then paste the
+  updated code into that function in the dashboard and re-deploy.
+- To update a function's code later, open it in the Edge Functions section of
+  the dashboard, paste in the new version, and deploy again.

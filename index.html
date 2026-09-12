@@ -290,14 +290,14 @@
 
     <div class="field">
       <label for="supabaseUrl">Supabase Edge Functions URL</label>
-      <input type="text" id="supabaseUrl" placeholder="https://YOUR-PROJECT.functions.supabase.co">
-      <span class="field-hint">Base URL for your deployed "get-article" and "translate" functions.</span>
+      <input type="text" id="supabaseUrl" placeholder="https://YOUR-PROJECT-REF.supabase.co/functions/v1">
+      <span class="field-hint">Your Project URL (Project Settings → API) with /functions/v1 added at the end.</span>
     </div>
 
     <div class="field">
-      <label for="supabaseAnonKey">Supabase anon key (optional)</label>
-      <input type="text" id="supabaseAnonKey" placeholder="only needed if your functions require it">
-      <span class="field-hint">Leave blank if you deployed the functions with --no-verify-jwt.</span>
+      <label for="supabaseAnonKey">Supabase anon key</label>
+      <input type="text" id="supabaseAnonKey" placeholder="the \"anon public\" key from Project Settings → API">
+      <span class="field-hint">Supabase functions expect this by default, so fill it in.</span>
     </div>
 
     <div class="field">
