@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>German Reading</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --panel: #ffffff;
+    --border: #e8ded0;
+    --text: #2e2620;
+    --text-muted: #8a7d6d;
+    --accent: #c1592f;
+    --accent-hover: #a84a24;
+    --accent-soft: #f3e3d8;
+    --error: #b3261e;
+    --error-bg: #fbeae8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1815;
+      --panel: #262019;
+      --border: #3a322a;
+      --text: #f0e9e0;
+      --text-muted: #a99d8c;
+      --accent: #e08557;
+      --accent-hover: #f0956a;
+      --accent-soft: #3a2a20;
+      --error: #ff8a80;
+      --error-bg: #3a2321;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .tagline {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .settings-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .settings-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0 6px;
+    flex-wrap: wrap;
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button.primary:hover { background: var(--accent-hover); }
+
+  button.primary:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .article-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .article-meta a {
+    color: var(--text-muted);
+  }
+
+  .status-line {
+    font-size: 13px;
+    margin: 10px 0 0;
+    min-height: 18px;
+  }
+
+  .status-line.error { color: var(--error); }
+  .status-line.info { color: var(--text-muted); }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 22px;
+  }
+
+  @media (max-width: 720px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+  }
+
+  .panel h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+
+  .panel .body-text {
+    flex: 1;
+    font-size: 16px;
+    white-space: pre-wrap;
+  }
+
+  .placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .panel-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  button.secondary {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button.secondary:hover { filter: brightness(0.96); }
+
+  button.secondary:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .settings-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-top: 20px;
+  }
+
+  .settings-panel h2 {
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+
+  .settings-panel .hint {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0 0 18px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .field .field-hint {
+    display: block;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .settings-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  button.link-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 9px 4px;
+  }
+
+  footer {
+    margin-top: 40px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>German Reading</h1>
+      <p class="tagline">A short German news article to read, translate, and hear.</p>
+    </div>
+    <button class="settings-toggle" id="settingsToggle" type="button">Settings</button>
+  </header>
+
+  <section class="settings-panel" id="settingsPanel" hidden>
+    <h2>Settings</h2>
+    <p class="hint">These are saved in this browser only (local storage) — not sent anywhere except when used to call the services below.</p>
+
+    <div class="field">
+      <label for="supabaseUrl">Supabase Edge Functions URL</label>
+      <input type="text" id="supabaseUrl" placeholder="https://YOUR-PROJECT.functions.supabase.co">
+      <span class="field-hint">Base URL for your deployed "get-article" and "translate" functions.</span>
+    </div>
+
+    <div class="field">
+      <label for="supabaseAnonKey">Supabase anon key (optional)</label>
+      <input type="text" id="supabaseAnonKey" placeholder="only needed if your functions require it">
+      <span class="field-hint">Leave blank if you deployed the functions with --no-verify-jwt.</span>
+    </div>
+
+    <div class="field">
+      <label for="elevenLabsKey">ElevenLabs API key</label>
+      <input type="text" id="elevenLabsKey" placeholder="sk_...">
+      <span class="field-hint">Used by the Listen button to generate German audio.</span>
+    </div>
+
+    <div class="field">
+      <label for="elevenLabsVoice">ElevenLabs voice ID (optional)</label>
+      <input type="text" id="elevenLabsVoice" placeholder="21m00Tcm4TlvDq8ikWAM">
+      <span class="field-hint">Defaults to a standard multilingual voice if left blank.</span>
+    </div>
+
+    <div class="settings-actions">
+      <button class="primary" id="saveSettings" type="button">Save</button>
+      <button class="link-btn" id="clearData" type="button">Clear saved article &amp; keys</button>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button class="primary" id="newArticleBtn" type="button">New Article</button>
+    <span class="article-meta" id="articleMeta"></span>
+  </div>
+  <p class="status-line" id="fetchStatus"></p>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>German</h2>
+      <div class="body-text" id="germanText">
+        <span class="placeholder">Click "New Article" to fetch a short German news summary.</span>
+      </div>
+      <div class="panel-actions">
+        <button class="secondary" id="translateBtn" type="button" disabled>Translate</button>
+        <button class="secondary" id="listenBtn" type="button" disabled>Listen</button>
+      </div>
+      <p class="status-line" id="listenStatus"></p>
+    </div>
+
+    <div class="panel">
+      <h2>English</h2>
+      <div class="body-text" id="englishText">
+        <span class="placeholder">The translation will appear here once you click Translate.</span>
+      </div>
+      <p class="status-line" id="translateStatus"></p>
+    </div>
+  </div>
+
+  <footer>
+    Sources: Tagesschau, Zeit Online, Spiegel Online, DW (Deutsche Welle). Summaries and translations are generated by Claude.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEYS = {
+    supabaseUrl: "gr_supabaseUrl",
+    supabaseAnonKey: "gr_supabaseAnonKey",
+    elevenLabsKey: "gr_elevenLabsKey",
+    elevenLabsVoice: "gr_elevenLabsVoice",
+    article: "gr_currentArticle" // { german, english, source, sourceUrl, fetchedAt }
+  };
+
+  const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+
+  const els = {
+    settingsToggle: document.getElementById("settingsToggle"),
+    settingsPanel: document.getElementById("settingsPanel"),
+    supabaseUrl: document.getElementById("supabaseUrl"),
+    supabaseAnonKey: document.getElementById("supabaseAnonKey"),
+    elevenLabsKey: document.getElementById("elevenLabsKey"),
+    elevenLabsVoice: document.getElementById("elevenLabsVoice"),
+    saveSettings: document.getElementById("saveSettings"),
+    clearData: document.getElementById("clearData"),
+    newArticleBtn: document.getElementById("newArticleBtn"),
+    articleMeta: document.getElementById("articleMeta"),
+    fetchStatus: document.getElementById("fetchStatus"),
+    germanText: document.getElementById("germanText"),
+    englishText: document.getElementById("englishText"),
+    translateBtn: document.getElementById("translateBtn"),
+    listenBtn: document.getElementById("listenBtn"),
+    listenStatus: document.getElementById("listenStatus"),
+    translateStatus: document.getElementById("translateStatus")
+  };
+
+  let currentArticle = null; // { german, english, source, sourceUrl, fetchedAt }
+  let currentAudioUrl = null;
+
+  // ---------- settings storage ----------
+
+  function loadSettings() {
+    els.supabaseUrl.value = localStorage.getItem(STORAGE_KEYS.supabaseUrl) || "";
+    els.supabaseAnonKey.value = localStorage.getItem(STORAGE_KEYS.supabaseAnonKey) || "";
+    els.elevenLabsKey.value = localStorage.getItem(STORAGE_KEYS.elevenLabsKey) || "";
+    els.elevenLabsVoice.value = localStorage.getItem(STORAGE_KEYS.elevenLabsVoice) || "";
+  }
+
+  function saveSettings() {
+    localStorage.setItem(STORAGE_KEYS.supabaseUrl, els.supabaseUrl.value.trim());
+    localStorage.setItem(STORAGE_KEYS.supabaseAnonKey, els.supabaseAnonKey.value.trim());
+    localStorage.setItem(STORAGE_KEYS.elevenLabsKey, els.elevenLabsKey.value.trim());
+    localStorage.setItem(STORAGE_KEYS.elevenLabsVoice, els.elevenLabsVoice.value.trim());
+    els.settingsPanel.hidden = true;
+    updateListenAvailability();
+  }
+
+  function getSetting(key) {
+    return localStorage.getItem(key) || "";
+  }
+
+  // ---------- article storage ----------
+
+  function loadStoredArticle() {
+    const raw = localStorage.getItem(STORAGE_KEYS.article);
+    if (!raw) return;
+    try {
+      currentArticle = JSON.parse(raw);
+      renderArticle();
+    } catch (e) {
+      // ignore corrupted data
+    }
+  }
+
+  function persistArticle() {
+    localStorage.setItem(STORAGE_KEYS.article, JSON.stringify(currentArticle));
+  }
+
+  // ---------- rendering ----------
+
+  function renderArticle() {
+    if (!currentArticle) return;
+
+    els.germanText.textContent = currentArticle.german;
+    els.translateBtn.disabled = false;
+    updateListenAvailability();
+
+    if (currentArticle.english) {
+      els.englishText.textContent = currentArticle.english;
+    } else {
+      els.englishText.innerHTML = '<span class="placeholder">The translation will appear here once you click Translate.</span>';
+    }
+
+    if (currentArticle.source) {
+      const metaParts = [currentArticle.source];
+      if (currentArticle.fetchedAt) {
+        metaParts.push(new Date(currentArticle.fetchedAt).toLocaleString());
+      }
+      els.articleMeta.textContent = metaParts.join(" · ");
+    } else {
+      els.articleMeta.textContent = "";
+    }
+  }
+
+  function updateListenAvailability() {
+    const hasKey = !!getSetting(STORAGE_KEYS.elevenLabsKey);
+    els.listenBtn.disabled = !currentArticle || !hasKey;
+  }
+
+  function setStatus(el, message, type) {
+    el.textContent = message || "";
+    el.className = "status-line" + (type ? " " + type : "");
+  }
+
+  // ---------- settings panel toggle ----------
+
+  els.settingsToggle.addEventListener("click", function () {
+    els.settingsPanel.hidden = !els.settingsPanel.hidden;
+  });
+
+  els.saveSettings.addEventListener("click", saveSettings);
+
+  els.clearData.addEventListener("click", function () {
+    Object.values(STORAGE_KEYS).forEach(function (k) { localStorage.removeItem(k); });
+    currentArticle = null;
+    els.germanText.innerHTML = '<span class="placeholder">Click "New Article" to fetch a short German news summary.</span>';
+    els.englishText.innerHTML = '<span class="placeholder">The translation will appear here once you click Translate.</span>';
+    els.articleMeta.textContent = "";
+    els.translateBtn.disabled = true;
+    els.listenBtn.disabled = true;
+    loadSettings();
+  });
+
+  // ---------- New Article ----------
+
+  els.newArticleBtn.addEventListener("click", async function () {
+    const base = getSetting(STORAGE_KEYS.supabaseUrl);
+    if (!base) {
+      setStatus(els.fetchStatus, 'Add your Supabase Edge Functions URL in Settings first.', "error");
+      els.settingsPanel.hidden = false;
+      return;
+    }
+
+    els.newArticleBtn.disabled = true;
+    setStatus(els.fetchStatus, "Fetching a new article…", "info");
+
+    try {
+      const headers = {};
+      const anonKey = getSetting(STORAGE_KEYS.supabaseAnonKey);
+      if (anonKey) headers["Authorization"] = "Bearer " + anonKey;
+
+      const res = await fetch(base.replace(/\/+$/, "") + "/get-article", { headers: headers });
+
+      if (!res.ok) {
+        throw new Error("Server returned " + res.status);
+      }
+
+      const data = await res.json();
+
+      currentArticle = {
+        german: data.article,
+        english: "",
+        source: data.source || "",
+        sourceUrl: data.sourceUrl || "",
+        fetchedAt: new Date().toISOString()
+      };
+
+      persistArticle();
+      renderArticle();
+      setStatus(els.fetchStatus, "", "");
+      setStatus(els.translateStatus, "", "");
+      setStatus(els.listenStatus, "", "");
+    } catch (err) {
+      setStatus(els.fetchStatus, "Could not fetch an article (" + err.message + "). Check your Supabase URL in Settings.", "error");
+    } finally {
+      els.newArticleBtn.disabled = false;
+    }
+  });
+
+  // ---------- Translate ----------
+
+  els.translateBtn.addEventListener("click", async function () {
+    if (!currentArticle) return;
+    const base = getSetting(STORAGE_KEYS.supabaseUrl);
+    if (!base) {
+      setStatus(els.translateStatus, "Add your Supabase Edge Functions URL in Settings first.", "error");
+      els.settingsPanel.hidden = false;
+      return;
+    }
+
+    els.translateBtn.disabled = true;
+    setStatus(els.translateStatus, "Translating…", "info");
+
+    try {
+      const headers = { "Content-Type": "application/json" };
+      const anonKey = getSetting(STORAGE_KEYS.supabaseAnonKey);
+      if (anonKey) headers["Authorization"] = "Bearer " + anonKey;
+
+      const res = await fetch(base.replace(/\/+$/, "") + "/translate", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ text: currentArticle.german })
+      });
+
+      if (!res.ok) {
+        throw new Error("Server returned " + res.status);
+      }
+
+      const data = await res.json();
+      currentArticle.english = data.translation;
+      persistArticle();
+      renderArticle();
+      setStatus(els.translateStatus, "", "");
+    } catch (err) {
+      setStatus(els.translateStatus, "Could not translate (" + err.message + ").", "error");
+    } finally {
+      els.translateBtn.disabled = false;
+    }
+  });
+
+  // ---------- Listen (ElevenLabs) ----------
+
+  els.listenBtn.addEventListener("click", async function () {
+    if (!currentArticle) return;
+    const apiKey = getSetting(STORAGE_KEYS.elevenLabsKey);
+    if (!apiKey) {
+      setStatus(els.listenStatus, "Add your ElevenLabs API key in Settings first.", "error");
+      els.settingsPanel.hidden = false;
+      return;
+    }
+
+    const voiceId = getSetting(STORAGE_KEYS.elevenLabsVoice) || DEFAULT_VOICE_ID;
+
+    els.listenBtn.disabled = true;
+    setStatus(els.listenStatus, "Generating audio…", "info");
+
+    try {
+      const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
+        method: "POST",
+        headers: {
+          "xi-api-key": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "audio/mpeg"
+        },
+        body: JSON.stringify({
+          text: currentArticle.german,
+          model_id: "eleven_multilingual_v2"
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error("ElevenLabs returned " + res.status);
+      }
+
+      const blob = await res.blob();
+      if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+      currentAudioUrl = URL.createObjectURL(blob);
+
+      const audio = new Audio(currentAudioUrl);
+      audio.play();
+      setStatus(els.listenStatus, "", "");
+    } catch (err) {
+      setStatus(els.listenStatus, "Could not generate audio (" + err.message + ").", "error");
+    } finally {
+      els.listenBtn.disabled = false;
+      updateListenAvailability();
+    }
+  });
+
+  // ---------- init ----------
+
+  loadSettings();
+  loadStoredArticle();
+  updateListenAvailability();
+})();
+</script>
+</body>
+</html>
