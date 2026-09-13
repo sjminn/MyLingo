@@ -464,6 +464,18 @@
     el.className = "status-line" + (type ? " " + type : "");
   }
 
+  async function describeError(res) {
+    // Try to pull the { error: "..." } message our Edge Functions send back;
+    // fall back to just the status code if the body isn't JSON.
+    try {
+      const data = await res.json();
+      if (data && data.error) return data.error;
+    } catch (e) {
+      // not JSON, ignore
+    }
+    return "Server returned " + res.status;
+  }
+
   // ---------- settings panel toggle ----------
 
   els.settingsToggle.addEventListener("click", function () {
@@ -504,7 +516,7 @@
       const res = await fetch(base.replace(/\/+$/, "") + "/get-article", { headers: headers });
 
       if (!res.ok) {
-        throw new Error("Server returned " + res.status);
+        throw new Error(await describeError(res));
       }
 
       const data = await res.json();
@@ -555,7 +567,7 @@
       });
 
       if (!res.ok) {
-        throw new Error("Server returned " + res.status);
+        throw new Error(await describeError(res));
       }
 
       const data = await res.json();
