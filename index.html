@@ -50,7 +50,27 @@
   }
 
   header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
     margin-bottom: 8px;
+  }
+
+  .header-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .header-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
   h1 {
@@ -195,6 +215,62 @@
     padding: 0;
   }
 
+  .saved-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .saved-panel h2 {
+    font-size: 16px;
+    margin: 0 0 14px;
+  }
+
+  .saved-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  .saved-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .saved-item:first-child { border-top: none; }
+
+  .saved-item-text {
+    min-width: 0;
+  }
+
+  .saved-item-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 4px;
+  }
+
+  .saved-item-snippet {
+    font-size: 14px;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .saved-item-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -202,9 +278,17 @@
 <div class="wrap">
 
   <header>
-    <h1>German Reading</h1>
-    <p class="tagline">A short German news article to read, translate, and hear.</p>
+    <div>
+      <h1>German Reading</h1>
+      <p class="tagline">A short German news article to read, translate, and hear.</p>
+    </div>
+    <button class="header-toggle" id="savedToggle" type="button">Saved</button>
   </header>
+
+  <section class="saved-panel" id="savedPanel" hidden>
+    <h2>Saved Articles</h2>
+    <div id="savedList"></div>
+  </section>
 
   <div class="toolbar">
     <button class="primary" id="newArticleBtn" type="button">New Article</button>
@@ -221,7 +305,9 @@
       <div class="panel-actions">
         <button class="secondary" id="translateBtn" type="button" disabled>Translate</button>
         <button class="secondary" id="listenBtn" type="button" disabled>Listen</button>
+        <button class="secondary" id="saveBtn" type="button" disabled>Save</button>
       </div>
+      <p class="status-line" id="saveStatus"></p>
       <p class="status-line" id="listenStatus"></p>
     </div>
 
@@ -248,7 +334,9 @@
   // Public by design: an "anon" Supabase key is meant to be visible in
   // client-side code, the same way a website address is. It doesn't grant
   // access to anything sensitive on its own — see requirements.md.
-  const SUPABASE_FUNCTIONS_URL = "https://imhembrilyepkvefsyox.supabase.co/functions/v1";
+  const SUPABASE_URL = "https://imhembrilyepkvefsyox.supabase.co";
+  const SUPABASE_FUNCTIONS_URL = SUPABASE_URL + "/functions/v1";
+  const SUPABASE_REST_URL = SUPABASE_URL + "/rest/v1";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaGVtYnJpbHllcGt2ZWZzeW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMzg1NDIsImV4cCI6MjEwNDgxNDU0Mn0.JGXfBm3j6CbamoI6DfQFkJQWlw5jv4ZRVp_wWRrSORY";
 
   const STORAGE_KEYS = {
@@ -263,9 +351,14 @@
     englishText: document.getElementById("englishText"),
     translateBtn: document.getElementById("translateBtn"),
     listenBtn: document.getElementById("listenBtn"),
+    saveBtn: document.getElementById("saveBtn"),
+    saveStatus: document.getElementById("saveStatus"),
     listenStatus: document.getElementById("listenStatus"),
     translateStatus: document.getElementById("translateStatus"),
-    clearData: document.getElementById("clearData")
+    clearData: document.getElementById("clearData"),
+    savedToggle: document.getElementById("savedToggle"),
+    savedPanel: document.getElementById("savedPanel"),
+    savedList: document.getElementById("savedList")
   };
 
   let currentArticle = null; // { german, english, source, sourceUrl, fetchedAt }
@@ -275,6 +368,15 @@
     options = options || {};
     const headers = Object.assign({ "Authorization": "Bearer " + SUPABASE_ANON_KEY }, options.headers || {});
     return fetch(SUPABASE_FUNCTIONS_URL + "/" + name, Object.assign({}, options, { headers: headers }));
+  }
+
+  function callTable(path, options) {
+    options = options || {};
+    const headers = Object.assign({
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY
+    }, options.headers || {});
+    return fetch(SUPABASE_REST_URL + "/" + path, Object.assign({}, options, { headers: headers }));
   }
 
   // ---------- article storage ----------
@@ -302,6 +404,7 @@
     els.germanText.textContent = currentArticle.german;
     els.translateBtn.disabled = false;
     els.listenBtn.disabled = false;
+    els.saveBtn.disabled = false;
 
     if (currentArticle.english) {
       els.englishText.textContent = currentArticle.english;
@@ -345,6 +448,7 @@
     els.articleMeta.textContent = "";
     els.translateBtn.disabled = true;
     els.listenBtn.disabled = true;
+    els.saveBtn.disabled = true;
   });
 
   // ---------- New Article ----------
@@ -444,6 +548,135 @@
     } finally {
       els.listenBtn.disabled = false;
     }
+  });
+
+  // ---------- Save ----------
+
+  els.saveBtn.addEventListener("click", async function () {
+    if (!currentArticle) return;
+
+    els.saveBtn.disabled = true;
+    setStatus(els.saveStatus, "Saving…", "info");
+
+    try {
+      const res = await callTable("saved_articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          german: currentArticle.german,
+          english: currentArticle.english || null,
+          source: currentArticle.source || null,
+          source_url: currentArticle.sourceUrl || null
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(await describeError(res));
+      }
+
+      setStatus(els.saveStatus, "Saved.", "info");
+    } catch (err) {
+      setStatus(els.saveStatus, "Could not save (" + err.message + ").", "error");
+    } finally {
+      els.saveBtn.disabled = false;
+    }
+  });
+
+  // ---------- Saved Articles panel ----------
+
+  function renderSavedList(rows) {
+    if (!rows || rows.length === 0) {
+      els.savedList.innerHTML = '<p class="saved-empty">Nothing saved yet. Click "Save" under an article to keep it here.</p>';
+      return;
+    }
+
+    els.savedList.innerHTML = "";
+    rows.forEach(function (row) {
+      const item = document.createElement("div");
+      item.className = "saved-item";
+
+      const textDiv = document.createElement("div");
+      textDiv.className = "saved-item-text";
+
+      const meta = document.createElement("p");
+      meta.className = "saved-item-meta";
+      const metaParts = [];
+      if (row.source) metaParts.push(row.source);
+      if (row.saved_at) metaParts.push(new Date(row.saved_at).toLocaleDateString());
+      meta.textContent = metaParts.join(" · ");
+
+      const snippet = document.createElement("p");
+      snippet.className = "saved-item-snippet";
+      snippet.textContent = row.german;
+
+      textDiv.appendChild(meta);
+      textDiv.appendChild(snippet);
+
+      const actions = document.createElement("div");
+      actions.className = "saved-item-actions";
+
+      const openBtn = document.createElement("button");
+      openBtn.className = "secondary";
+      openBtn.type = "button";
+      openBtn.textContent = "Open";
+      openBtn.addEventListener("click", function () {
+        currentArticle = {
+          german: row.german,
+          english: row.english || "",
+          source: row.source || "",
+          sourceUrl: row.source_url || "",
+          fetchedAt: row.saved_at
+        };
+        persistArticle();
+        renderArticle();
+        els.savedPanel.hidden = true;
+        setStatus(els.fetchStatus, "", "");
+      });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "link-btn";
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", async function () {
+        removeBtn.disabled = true;
+        try {
+          const res = await callTable("saved_articles?id=eq." + encodeURIComponent(row.id), { method: "DELETE" });
+          if (!res.ok) throw new Error(await describeError(res));
+          item.remove();
+          if (!els.savedList.querySelector(".saved-item")) {
+            renderSavedList([]);
+          }
+        } catch (err) {
+          removeBtn.disabled = false;
+          alert("Could not remove this article: " + err.message);
+        }
+      });
+
+      actions.appendChild(openBtn);
+      actions.appendChild(removeBtn);
+
+      item.appendChild(textDiv);
+      item.appendChild(actions);
+      els.savedList.appendChild(item);
+    });
+  }
+
+  async function loadSavedList() {
+    els.savedList.innerHTML = '<p class="saved-empty">Loading…</p>';
+    try {
+      const res = await callTable("saved_articles?select=*&order=saved_at.desc");
+      if (!res.ok) throw new Error(await describeError(res));
+      const rows = await res.json();
+      renderSavedList(rows);
+    } catch (err) {
+      els.savedList.innerHTML = '<p class="saved-empty">Could not load saved articles (' + err.message + ').</p>';
+    }
+  }
+
+  els.savedToggle.addEventListener("click", function () {
+    const opening = els.savedPanel.hidden;
+    els.savedPanel.hidden = !els.savedPanel.hidden;
+    if (opening) loadSavedList();
   });
 
   // ---------- init ----------
