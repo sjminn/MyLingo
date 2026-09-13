@@ -99,6 +99,7 @@ async function summarizeInGerman(item: FeedItem): Promise<string> {
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
       max_tokens: 300,
+      thinking: { type: "disabled" }, // simple task, no need to pay for reasoning tokens
       messages: [
         {
           role: "user",
@@ -118,9 +119,11 @@ async function summarizeInGerman(item: FeedItem): Promise<string> {
   }
 
   const data = await res.json();
-  const text = data?.content?.[0]?.text;
-  if (!text) throw new Error("Anthropic API returned no text");
-  return text.trim();
+  // Claude may return a "thinking" block before the "text" block, so find
+  // the text block by type rather than assuming it's first in the array.
+  const textBlock = (data?.content || []).find((block: any) => block.type === "text");
+  if (!textBlock?.text) throw new Error("Anthropic API returned no text");
+  return textBlock.text.trim();
 }
 
 Deno.serve(async (req) => {
