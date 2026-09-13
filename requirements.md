@@ -22,8 +22,23 @@
 
 ### 4. Storage
 - No login or account is required; the app works immediately for any visitor.
-- The one-paragraph article (and likely its translation) is saved to the browser's local storage.
-- Local storage is a temporary/interim solution. The data model should be simple enough to later swap for an online database (e.g., Supabase) without much rework.
+- The **current** article (whatever's on screen) is kept in the browser's
+  local storage, so reopening the app shows the last article you had up.
+- **Saved** articles — ones you deliberately click "Save" on — go into a real
+  Supabase database table instead, so they persist across devices and
+  browsers, not just the one that saved them. See "Saved Articles" below.
+
+### 5. Saved Articles
+- A **Save** button under each article adds it to a `saved_articles` table in
+  Supabase (via Supabase's REST API directly, no Edge Function needed for
+  this part).
+- A **Saved** panel (toggled from the header) lists everything saved, newest
+  first, each with an **Open** button (loads it back into the main view) and
+  a **Remove** button (deletes it from the table).
+- Because the app has no login, this list is shared with anyone who has the
+  site's URL — same openness tradeoff as the rest of the app, now extended to
+  whatever gets saved. See "API Key Storage" below for the same idea applied
+  to the database's access rules.
 
 ## Technical Constraints
 - The main app is a **single HTML file** (HTML, CSS, and JavaScript all together).
@@ -69,10 +84,7 @@
   key, control what it can do), unlike the Anthropic and ElevenLabs keys,
   which are genuinely private and must never appear in the page source.
 
-## Open Questions (to resolve during design/build)
-- **Article history**: does the app only ever hold one article at a time, or should past articles be kept in local storage as a small archive?
-
 ## Out of Scope (for now)
 - User accounts / login
-- Persistent server-side database (planned for later via Supabase)
+- Per-user saved lists (everyone currently shares one list, since there's no login)
 - Multiple simultaneous articles or categories

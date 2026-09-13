@@ -30,6 +30,34 @@ All done through the Supabase dashboard — no command line needed.
    `speak` will return errors until `ELEVENLABS_API_KEY` is set — that's
    expected until you've signed up for ElevenLabs.
 
+3. **Database table.** For the Save Articles feature, run this once in the
+   **SQL Editor**:
+
+   ```sql
+   create table if not exists saved_articles (
+     id uuid primary key default gen_random_uuid(),
+     german text not null,
+     english text,
+     source text,
+     source_url text,
+     saved_at timestamptz not null default now()
+   );
+
+   alter table saved_articles enable row level security;
+
+   create policy "Anyone can read saved articles"
+     on saved_articles for select
+     using (true);
+
+   create policy "Anyone can save an article"
+     on saved_articles for insert
+     with check (true);
+
+   create policy "Anyone can remove a saved article"
+     on saved_articles for delete
+     using (true);
+   ```
+
 That's it. The app's Project URL and anon key are already written into
 `index.html` directly (see "Why these are safe to bake in" below), so there's
 nothing to paste into the app itself, on any device.
@@ -38,11 +66,16 @@ nothing to paste into the app itself, on any device.
 
 Supabase's "anon public" key is designed to be visible in client-side code —
 that's what "public" means here. It doesn't grant access to anything by
-itself; Supabase's own permission rules (not secrecy of this key) control
-what it can do, and this app doesn't use the database at all yet. The
-Anthropic and ElevenLabs keys are different — genuinely private — which is
-why those stay as server-side secrets inside the Edge Functions, never sent
-to any browser.
+itself; Supabase's own permission rules control what it can do. The three
+policies above are deliberately wide open (anyone can read, save, or remove
+any saved article) because this app has no login — the same "no login"
+tradeoff already accepted for the rest of the app now also applies to
+whatever gets saved. Fine for a personal project; just know that anyone who
+finds the site's URL could technically see or clear the saved list too.
+
+The Anthropic and ElevenLabs keys are different — genuinely private — which
+is why those stay as server-side secrets inside the Edge Functions, never
+sent to any browser.
 
 ## Updating a function's code later
 
