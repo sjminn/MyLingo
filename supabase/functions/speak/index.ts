@@ -5,7 +5,7 @@
 // needs to hold it.
 
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-const DEFAULT_VOICE_ID = "C9fbwSpEaejywLWx722Z"; // custom voice created in ElevenLabs (not a library voice, so it works on the free plan's API)
+const DEFAULT_VOICE_ID = "Yx4X9U8QkXogjFRVUDRV"; // custom voice created in ElevenLabs (not a library voice, so it works on the free plan's API)
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
