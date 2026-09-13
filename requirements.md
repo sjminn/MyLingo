@@ -16,8 +16,9 @@
 
 ### 3. Listen (Text-to-Speech)
 - A **Listen** button plays the German article aloud.
-- Audio is generated via the ElevenLabs API.
-- The ElevenLabs API key is not included at build time — the app should have a place to enter/store the key later, and the Listen button should call the API once a key is provided.
+- Audio is generated via the ElevenLabs API, called through a Supabase Edge
+  Function (`speak`) that holds the ElevenLabs key server-side — see "API key
+  storage" below.
 
 ### 4. Storage
 - No login or account is required; the app works immediately for any visitor.
@@ -56,13 +57,19 @@
   called when the user clicks Translate. Same API key as the summarizer above,
   so there's one Anthropic key to manage instead of two separate services.
 
+## API Key Storage (decided)
+- Neither the Anthropic key nor the ElevenLabs key is ever stored in the
+  browser, or entered by the user at all. Both live as server-side secrets on
+  Supabase, used only inside the three Edge Functions (`get-article`,
+  `translate`, `speak`). This also means the app needs zero per-device setup —
+  it works identically on any computer or phone the moment you open it.
+- The Supabase Project URL and "anon public" key **are** written directly into
+  `index.html`. This is safe: an anon key is specifically designed to be
+  visible in client-side code (Supabase's access rules, not secrecy of this
+  key, control what it can do), unlike the Anthropic and ElevenLabs keys,
+  which are genuinely private and must never appear in the page source.
+
 ## Open Questions (to resolve during design/build)
-- **API key storage**: the ElevenLabs key and the Anthropic (Claude) key — should
-  they be saved in local storage for convenience, understanding they'd then be
-  visible to anyone with access to that browser? (The Anthropic key is also used
-  server-side inside the Supabase Edge Function, where it's safe from the browser
-  entirely — only the ElevenLabs key, used client-side for audio, faces this
-  tradeoff directly.)
 - **Article history**: does the app only ever hold one article at a time, or should past articles be kept in local storage as a small archive?
 
 ## Out of Scope (for now)

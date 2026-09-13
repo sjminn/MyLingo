@@ -1,71 +1,62 @@
 # German Reading — Setup Guide
 
-The app itself is [index.html](index.html) — you can open that file directly in
-a browser right now. It'll show placeholders until the two small backend
-functions below are deployed, because fetching real news and calling Claude
-has to happen on a server, not in the browser (see requirements.md for why).
-
-This is a one-time setup, done entirely through the Supabase website — no
-command line or software installs needed. After it's done, you'll paste two
-things into the app's Settings panel and it works from then on.
+The app itself is [index.html](index.html). It's already connected to the
+Supabase project and needs no per-device setup — open it in any browser, on
+any computer or phone, and it works. This guide is for deploying/updating the
+backend functions, not for everyday use.
 
 ## What you'll need
 
-- A free [Supabase](https://supabase.com) account.
-- A free [Anthropic Console](https://console.anthropic.com) account, with an
-  API key (this is separate from your Claude.ai login).
+- A [Supabase](https://supabase.com) account (already set up).
+- An [Anthropic Console](https://console.anthropic.com) API key (already set up).
+- An [ElevenLabs](https://elevenlabs.io) account and API key, once you're
+  ready to make the Listen button work.
 
-## Steps
+## One-time backend setup
 
-1. **Create a Supabase project.** In the Supabase dashboard, click "New
-   project" and give it any name (e.g. "german-reading").
+All done through the Supabase dashboard — no command line needed.
 
-2. **Copy your Project URL and anon key.** In the project, go to
-   **Project Settings → API**. You'll need two values from this page:
-   - **Project URL** (looks like `https://abcdefgh.supabase.co`)
-   - **anon public** key (a long string under "Project API keys")
+1. **Secrets.** In your Supabase project, go to **Edge Functions → Secrets**
+   and make sure these exist (names must match exactly, all uppercase):
+   - `ANTHROPIC_API_KEY` — your Anthropic key (starts with `sk-ant-`)
+   - `ELEVENLABS_API_KEY` — your ElevenLabs key, once you have one
 
-3. **Store your Anthropic key as a secret.** Go to **Edge Functions** in the
-   left sidebar, then find the **Secrets** tab. Add a new secret:
-   - Name: `ANTHROPIC_API_KEY`
-   - Value: your Anthropic API key (starts with `sk-ant-`)
+2. **Functions.** Create three functions under **Edge Functions**, each
+   named exactly as shown, pasting in the matching file's contents:
+   - `get-article` → [supabase/functions/get-article/index.ts](supabase/functions/get-article/index.ts)
+   - `translate` → [supabase/functions/translate/index.ts](supabase/functions/translate/index.ts)
+   - `speak` → [supabase/functions/speak/index.ts](supabase/functions/speak/index.ts)
 
-   This keeps the key on Supabase's servers — it never touches the browser.
+   `speak` will return errors until `ELEVENLABS_API_KEY` is set — that's
+   expected until you've signed up for ElevenLabs.
 
-4. **Create the first function.** Still in **Edge Functions**, click
-   **Deploy a new function** (or **Create a function**). Name it exactly:
-   ```
-   get-article
-   ```
-   Open [supabase/functions/get-article/index.ts](supabase/functions/get-article/index.ts)
-   in this project, copy its entire contents, and paste them into the code
-   editor Supabase gives you. Deploy it.
+That's it. The app's Project URL and anon key are already written into
+`index.html` directly (see "Why these are safe to bake in" below), so there's
+nothing to paste into the app itself, on any device.
 
-5. **Create the second function** the same way, named exactly:
-   ```
-   translate
-   ```
-   using the contents of [supabase/functions/translate/index.ts](supabase/functions/translate/index.ts).
+## Why these are safe to bake in
 
-6. **Open the app, click Settings, and paste in:**
-   - **Supabase Edge Functions URL** — your Project URL from step 2, with
-     `/functions/v1` added to the end, e.g.
-     `https://abcdefgh.supabase.co/functions/v1`
-   - **Supabase anon key** — the anon public key from step 2. (Supabase
-     functions expect this by default, so fill this in rather than leaving
-     it blank.)
-   - **ElevenLabs API key** — from your ElevenLabs account, for the Listen
-     button.
+Supabase's "anon public" key is designed to be visible in client-side code —
+that's what "public" means here. It doesn't grant access to anything by
+itself; Supabase's own permission rules (not secrecy of this key) control
+what it can do, and this app doesn't use the database at all yet. The
+Anthropic and ElevenLabs keys are different — genuinely private — which is
+why those stay as server-side secrets inside the Edge Functions, never sent
+to any browser.
 
-7. Click **New Article**. If something goes wrong, the app will show a short
-   error message — the most common causes are a typo in the Functions URL, a
-   missing anon key, or the `ANTHROPIC_API_KEY` secret not being set yet.
+## Updating a function's code later
+
+Open it in the Edge Functions section of the dashboard, paste in the new
+version, and deploy again. If you ever change your Supabase project (new
+project, new anon key), update the two constants near the top of the
+`<script>` block in `index.html` to match.
 
 ## Notes
 
 - DW's exact RSS feed path occasionally changes. If articles stop coming from
   DW specifically, check [rss.dw.com](https://rss.dw.com) for the current feed
-  URL, update it in `supabase/functions/get-article/index.ts`, then paste the
-  updated code into that function in the dashboard and re-deploy.
-- To update a function's code later, open it in the Edge Functions section of
-  the dashboard, paste in the new version, and deploy again.
+  URL and update it in `supabase/functions/get-article/index.ts`, then
+  redeploy that function.
+- If a secret's name has a typo (wrong case, extra characters), the affected
+  function will return a clear error naming the missing secret — the app
+  shows this error message directly rather than a generic failure.
